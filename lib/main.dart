@@ -4,13 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/task_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi Supabase (Ganti URL dan Anon Key dengan kredensial project Supabase Anda)
+  // Inisialisasi Supabase (Ganti URL dan Anon Key dengan milik Anda di Supabase Dashboard)
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: 'YOUR_SUPABASE_URL', // Ganti dengan Project URL Supabase Anda
+    anonKey: 'YOUR_SUPABASE_ANON_KEY', // Ganti dengan Anon/Public Key Supabase Anda
   );
 
   runApp(const MyApp());
@@ -23,16 +23,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        // Mendaftarkan TaskProvider agar bisa digunakan di seluruh halaman
+        ChangeNotifierProvider(create: (_) => TaskProvider()..fetchTasks()),
       ],
       child: MaterialApp(
-        title: 'TaskMate - UTS Flutter',
+        title: 'TaskMate UTS',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.deepPurple,
           useMaterial3: true,
         ),
         home: const HomeScreen(),
-        debugShowCheckedModeBanner: false,
       ),
     );
   }

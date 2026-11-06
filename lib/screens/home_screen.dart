@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
-import '../widgets/quote_card.dart';
-import '../widgets/task_card.dart';
 import '../models/task_model.dart';
+import 'task_detail_screen.dart';
+import 'edit_task_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,14 +17,157 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Memuat data kutipan dan tugas saat halaman pertama kali dibuka
+    // Memuat data dashboard dan tugas saat pertama kali dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TaskProvider>(context, listen: false).loadDashboardData();
     });
   }
 
-  // Fungsi untuk menampilkan dialog form tambah tugas
-  void _showAddTaskDialog(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TaskMate - UTS Flutter'),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Consumer<TaskProvider>(
+        builder: (context, taskProvider, child) {
+          if (taskProvider.isLoading && taskProvider.tasks.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => taskProvider.loadDashboardData(),
+            child: ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                // Widget Motivasi API (Contoh Banner)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.deepPurple.shade200),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '💡 Daily Motivation',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '"Do small things with great love."',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Daftar Tugas Anda',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Kondisi jika tugas kosong
+                taskProvider.tasks.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.only(top: 40),
+                        child: Center(
+                          child: Text(
+                            'Belum ada tugas. Silakan tambah tugas baru!',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: taskProvider.tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = taskProvider.tasks[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: task.isCompleted,
+                                onChanged: (bool? value) {
+                                  if (task.id != null) {
+                                    taskProvider.toggleTask(task.id!, task.isCompleted);
+                                  }
+                                },
+                              ),
+                              title: Text(
+                                task.title,
+                                style: TextStyle(
+                                  decoration: task.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${task.category} • Prioritas: ${task.priority}',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                onPressed: () {
+                                  if (task.id != null) {
+                                    taskProvider.deleteTask(task.id!);
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TaskDetailScreen(task: task),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ],
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        onPressed: () {
+          _showAddTaskModal(context);
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  // Modal Dialog untuk Tambah Tugas
+  void _showAddTaskModal(BuildContext context) {
     final titleController = TextEditingController();
     final descController = TextEditingController();
     String selectedCategory = 'General';
@@ -32,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) {
+      builder: (context) {
         return AlertDialog(
           title: const Text('Tambah Tugas Baru'),
           content: SingleChildScrollView(
@@ -69,116 +212,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
+              onPressed: () => Navigator.pop(context),
               child: const Text('Batal'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
-                if (titleController.text.isNotEmpty) {
+                if (titleController.text.trim().isNotEmpty) {
                   final newTask = TaskModel(
                     title: titleController.text,
                     description: descController.text,
                     category: selectedCategory,
                     priority: selectedPriority,
+                    isCompleted: false,
                   );
                   Provider.of<TaskProvider>(context, listen: false).addTask(newTask);
-                  Navigator.pop(dialogContext);
+                  Navigator.pop(context);
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-              ),
               child: const Text('Simpan'),
             ),
           ],
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('TaskMate - UTS Flutter'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<TaskProvider>(
-        builder: (context, taskProvider, child) {
-          if (taskProvider.state == ViewState.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => taskProvider.loadDashboardData(),
-            child: Column(
-              children: [
-                // Menampilkan Widget Quote Motivasi dari API
-                QuoteCard(quote: taskProvider.quote),
-                
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Daftar Tugas Anda',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-
-                // Daftar Tugas
-                Expanded(
-                  child: taskProvider.state == ViewState.empty
-                      ? const Center(
-                          child: Text(
-                            'Belum ada tugas. Yuk tambahkan tugas baru!',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: taskProvider.tasks.length,
-                          itemBuilder: (context, index) {
-                            final task = taskProvider.tasks[index];
-                            return TaskCard(
-                              task: task,
-                              onCheckboxChanged: (val) {
-                                if (task.id != null) {
-                                  taskProvider.toggleTask(task.id!, task.isCompleted);
-                                }
-                              },
-                              onDelete: () {
-                                if (task.id != null) {
-                                  taskProvider.deleteTask(task.id!);
-                                }
-                              },
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context),
-        backgroundColor: Colors.deepPurple,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }

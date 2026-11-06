@@ -1,16 +1,51 @@
 import '../models/task_model.dart';
-import '../models/quote_model.dart';
-import '../services/api_service.dart';
-import '../services/supabase_service.dart';
 
 class TaskRepository {
-  final ApiService _apiService = ApiService();
-  final SupabaseService _supabaseService = SupabaseService();
+  // Penyimpanan sementara di memori agar aplikasi langsung berjalan lancar
+  static final List<TaskModel> _memoryTasks = [
+    TaskModel(
+      id: 1,
+      title: 'Membuat Laporan UTS Mobile',
+      description: 'Menyelesaikan dokumentasi project Flutter dan integrasi',
+      category: 'Kuliah',
+      priority: 'High',
+      isCompleted: false,
+    ),
+    TaskModel(
+      id: 2,
+      title: 'Belanja Kebutuhan Mingguan',
+      description: 'Membeli beras, minyak goreng, dan sayuran',
+      category: 'Pribadi',
+      priority: 'Medium',
+      isCompleted: false,
+    ),
+  ];
 
-  Future<QuoteModel> getDailyQuote() => _apiService.fetchDailyQuote();
-  Future<List<TaskModel>> getTasks() => _supabaseService.getTasks();
-  Future<void> addTask(TaskModel task) => _supabaseService.addTask(task);
-  Future<void> updateTask(String id, TaskModel task) => _supabaseService.updateTask(id, task);
-  Future<void> toggleTaskStatus(String id, bool isCompleted) => _supabaseService.toggleTaskStatus(id, isCompleted);
-  Future<void> deleteTask(String id) => _supabaseService.deleteTask(id);
+  Future<List<TaskModel>> getTasks() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _memoryTasks;
+  }
+
+  Future<void> addTask(TaskModel task) async {
+    final newTask = TaskModel(
+      id: (_memoryTasks.isNotEmpty ? _memoryTasks.map((e) => e.id ?? 0).reduce((a, b) => a > b ? a : b) : 0) + 1,
+      title: task.title,
+      description: task.description,
+      category: task.category,
+      priority: task.priority,
+      isCompleted: task.isCompleted,
+    );
+    _memoryTasks.add(newTask);
+  }
+
+  Future<void> updateTask(TaskModel task) async {
+    final index = _memoryTasks.indexWhere((t) => t.id == task.id);
+    if (index != -1) {
+      _memoryTasks[index] = task;
+    }
+  }
+
+  Future<void> deleteTask(int id) async {
+    _memoryTasks.removeWhere((t) => t.id == id);
+  }
 }
