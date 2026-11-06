@@ -4,6 +4,7 @@ import '../providers/task_provider.dart';
 import '../widgets/quote_card.dart';
 import '../widgets/task_card.dart';
 import '../models/task_model.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -103,6 +104,17 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('TaskMate - UTS Flutter'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<TaskProvider>(
         builder: (context, taskProvider, child) {
