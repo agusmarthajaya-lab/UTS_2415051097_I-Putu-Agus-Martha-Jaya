@@ -40,7 +40,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
                 setState(() {
                   _tasks.removeAt(index);
@@ -48,6 +51,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.of(context).pop();
               },
               child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmClearAll() {
+    if (_tasks.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Hapus Semua Tugas'),
+          content: const Text('Apakah Anda yakin ingin menghapus seluruh daftar tugas?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _tasks.clear();
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus Semua'),
             ),
           ],
         );
@@ -73,8 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
 
-    // Menghitung jumlah tugas selesai
-    final int completedCount = _tasks.where((task) => (task as Map<String, dynamic>)['isDone'] == true).length;
+    final int completedCount = _tasks
+        .where((task) => (task as Map<String, dynamic>)['isDone'] == true)
+        .length;
     final int totalCount = _tasks.length;
 
     return Scaffold(
@@ -98,7 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.white24,
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -131,26 +170,49 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                   child: const Text('Tambah'),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            // Indikator Statistik Tugas
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.deepPurple.shade200),
-              ),
-              child: Text(
-                'Total Tugas: $totalCount | Selesai: $completedCount',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurple.shade800),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.deepPurple.shade200),
+                    ),
+                    child: Text(
+                      'Total: $totalCount | Selesai: $completedCount',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple.shade800,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _tasks.isEmpty ? null : _confirmClearAll,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                    foregroundColor: Colors.red,
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.delete_sweep, size: 18),
+                  label: const Text('Hapus Semua'),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -182,11 +244,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: (task['isDone'] as bool)
                                     ? TextDecoration.lineThrough
                                     : TextDecoration.none,
-                                color: (task['isDone'] as bool) ? Colors.grey : Colors.black,
+                                color: (task['isDone'] as bool)
+                                    ? Colors.grey
+                                    : Colors.black,
                               ),
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.redAccent,
+                              ),
                               onPressed: () => _confirmDelete(index),
                             ),
                           ),
