@@ -16,7 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _taskController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedPriority = 'Normal'; // Pilihan prioritas default
+  String _selectedPriority = 'Normal';
+  String _filterStatus = 'Semua'; // Status filter: Semua, Belum, Selesai
 
   void _addTask() {
     if (_taskController.text.trim().isNotEmpty) {
@@ -125,9 +126,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
 
+    // Filter tugas berdasarkan pencarian dan status (Commit ke-14)
     final filteredTasks = _tasks.where((task) {
       final title = (task['title'] as String).toLowerCase();
-      return title.contains(_searchQuery.toLowerCase());
+      final isDone = task['isDone'] as bool;
+      
+      bool matchesSearch = title.contains(_searchQuery.toLowerCase());
+      bool matchesFilter = true;
+
+      if (_filterStatus == 'Belum') {
+        matchesFilter = !isDone;
+      } else if (_filterStatus == 'Selesai') {
+        matchesFilter = isDone;
+      }
+
+      return matchesSearch && matchesFilter;
     }).toList();
 
     final int completedCount = _tasks
@@ -174,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Input Tugas & Pilih Prioritas
+            // Input Tugas & Prioritas
             Row(
               children: [
                 Expanded(
@@ -216,19 +229,40 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            // Input Pencarian
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Cari tugas...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+            // Input Pencarian & Pilihan Filter Status
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cari tugas...',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _filterStatus,
+                  items: ['Semua', 'Belum', 'Selesai'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text('Filter: $value', style: const TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _filterStatus = newValue!;
+                    });
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             // Statistik & Tombol Hapus Semua
