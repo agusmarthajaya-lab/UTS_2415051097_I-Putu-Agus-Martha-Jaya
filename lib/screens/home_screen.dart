@@ -12,9 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Daftar tugas dimulai dalam keadaan kosong agar bisa diisi sendiri oleh pengguna
   final List<dynamic> _tasks = [];
-
   final TextEditingController _taskController = TextEditingController();
 
   void _addTask() {
@@ -27,6 +25,35 @@ class _HomeScreenState extends State<HomeScreen> {
         _taskController.clear();
       });
     }
+  }
+
+  // Fungsi untuk memunculkan dialog konfirmasi hapus
+  void _confirmDelete(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Hapus Tugas'),
+          content: const Text('Apakah Anda yakin ingin menghapus tugas ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _tasks.removeAt(index);
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _logout() {
@@ -142,11 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete, color: Colors.redAccent),
-                              onPressed: () {
-                                setState(() {
-                                  _tasks.removeAt(index);
-                                });
-                              },
+                              onPressed: () => _confirmDelete(index),
                             ),
                           ),
                         );
