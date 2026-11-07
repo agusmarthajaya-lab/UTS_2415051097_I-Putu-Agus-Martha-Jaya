@@ -1,17 +1,21 @@
-# task_mate
+# TaskMate - Flutter Web Application (UTS)
 
-A new Flutter project.
+TaskMate adalah aplikasi manajemen tugas (*Task Management*) sederhana berbasis Flutter Web yang dikembangkan untuk memenuhi Ujian Tengah Semester (UTS).
 
-## Getting Started
+## Identitas Pembuat
+* **Nama:** I Putu Agus Martha Jaya
+* **NIM:** 2415051097
+* **Program Studi:** Pendidikan Teknik Informatika
 
-This project is a starting point for a Flutter application.
+## Fitur Utama
+1. **Autentikasi Sederhana:** Masuk aplikasi menggunakan input Nama dan NIM lokal.
+2. **Manajemen Tugas (CRUD):** Menambah tugas baru, menandai selesai (coret teks), dan menghapus tugas satuan.
+3. **Indikator & Statistik:** Menghitung total tugas vs tugas yang sudah selesai.
+4. **Hapus Semua (*Clear All*):** Membersihkan seluruh daftar tugas sekaligus dengan dialog konfirmasi.
+5. **Pencarian & Filter:** Mencari tugas berdasarkan teks serta memfilter status (Semua, Belum Selesai, Selesai).
+6. **Prioritas Tugas:** Mengatur tingkat kepentingan tugas (Normal, Sedang, Penting) dilengkapi indikator warna.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Teknologi
+* **Framework:** Flutter (Dart)
+* **Target Platform:** Web
+* **Version Control:** Git & GitHub
