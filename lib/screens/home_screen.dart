@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Fungsi untuk memunculkan dialog konfirmasi hapus
   void _confirmDelete(int index) {
     showDialog(
       context: context,
@@ -73,6 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
+
+    // Menghitung jumlah tugas selesai
+    final int completedCount = _tasks.where((task) => (task as Map<String, dynamic>)['isDone'] == true).length;
+    final int totalCount = _tasks.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -134,7 +137,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // Indikator Statistik Tugas
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.deepPurple.shade200),
+              ),
+              child: Text(
+                'Total Tugas: $totalCount | Selesai: $completedCount',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.deepPurple.shade800),
+              ),
+            ),
+            const SizedBox(height: 16),
             Expanded(
               child: _tasks.isEmpty
                   ? const Center(
