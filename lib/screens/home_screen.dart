@@ -16,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _taskController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedPriority = 'Normal'; // Pilihan prioritas default
 
   void _addTask() {
     if (_taskController.text.trim().isNotEmpty) {
@@ -23,8 +24,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _tasks.add({
           'title': _taskController.text.trim(),
           'isDone': false,
+          'priority': _selectedPriority,
         });
         _taskController.clear();
+        _selectedPriority = 'Normal';
       });
     }
   }
@@ -99,6 +102,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'Penting':
+        return Colors.red;
+      case 'Sedang':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
+  }
+
   @override
   void dispose() {
     _taskController.dispose();
@@ -111,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
 
-    // Filter tugas berdasarkan pencarian
     final filteredTasks = _tasks.where((task) {
       final title = (task['title'] as String).toLowerCase();
       return title.contains(_searchQuery.toLowerCase());
@@ -161,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Input Tambah Tugas
+            // Input Tugas & Pilih Prioritas
             Row(
               children: [
                 Expanded(
@@ -175,23 +188,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     onSubmitted: (_) => _addTask(),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _selectedPriority,
+                  items: ['Normal', 'Sedang', 'Penting'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value, style: const TextStyle(fontSize: 13)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedPriority = newValue!;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _addTask,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   child: const Text('Tambah'),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            // Input Pencarian Tugas (Fitur Commit Baru)
+            // Input Pencarian
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
@@ -254,8 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: filteredTasks.length,
                       itemBuilder: (context, index) {
                         final task = filteredTasks[index] as Map<String, dynamic>;
-                        // Cari indeks asli di list _tasks agar tombol hapus/ceklis tetap akurat
                         final originalIndex = _tasks.indexOf(task);
+                        final priority = task['priority'] ?? 'Normal';
+
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
@@ -276,6 +302,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: (task['isDone'] as bool)
                                     ? Colors.grey
                                     : Colors.black,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Prioritas: $priority',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _getPriorityColor(priority),
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             trailing: IconButton(
