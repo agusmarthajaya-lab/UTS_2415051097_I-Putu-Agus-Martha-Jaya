@@ -14,6 +14,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<dynamic> _tasks = [];
   final TextEditingController _taskController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   void _addTask() {
     if (_taskController.text.trim().isNotEmpty) {
@@ -100,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _taskController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -107,6 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
+
+    // Filter tugas berdasarkan pencarian
+    final filteredTasks = _tasks.where((task) {
+      final title = (task['title'] as String).toLowerCase();
+      return title.contains(_searchQuery.toLowerCase());
+    }).toList();
 
     final int completedCount = _tasks
         .where((task) => (task as Map<String, dynamic>)['isDone'] == true)
@@ -152,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Input Tambah Tugas
             Row(
               children: [
                 Expanded(
@@ -160,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Tambah tugas baru...',
                       border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.add_task),
                     ),
                     onSubmitted: (_) => _addTask(),
                   ),
@@ -179,7 +190,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            // Input Pencarian Tugas (Fitur Commit Baru)
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Cari tugas...',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
             const SizedBox(height: 16),
+            // Statistik & Tombol Hapus Semua
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -216,17 +243,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _tasks.isEmpty
+              child: filteredTasks.isEmpty
                   ? const Center(
                       child: Text(
-                        'Belum ada tugas. Silakan tambahkan!',
+                        'Tidak ada tugas ditemukan.',
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
                   : ListView.builder(
-                      itemCount: _tasks.length,
+                      itemCount: filteredTasks.length,
                       itemBuilder: (context, index) {
-                        final task = _tasks[index] as Map<String, dynamic>;
+                        final task = filteredTasks[index] as Map<String, dynamic>;
+                        // Cari indeks asli di list _tasks agar tombol hapus/ceklis tetap akurat
+                        final originalIndex = _tasks.indexOf(task);
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
@@ -234,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               value: task['isDone'] as bool,
                               onChanged: (bool? value) {
                                 setState(() {
-                                  task['isDone'] = value ?? false;
+                                  _tasks[originalIndex]['isDone'] = value ?? false;
                                 });
                               },
                             ),
@@ -254,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Icons.delete,
                                 color: Colors.redAccent,
                               ),
-                              onPressed: () => _confirmDelete(index),
+                              onPressed: () => _confirmDelete(originalIndex),
                             ),
                           ),
                         );
