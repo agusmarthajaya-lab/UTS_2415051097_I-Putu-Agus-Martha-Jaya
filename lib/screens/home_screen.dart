@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedPriority = 'Normal';
-  String _filterStatus = 'Semua'; // Status filter: Semua, Belum, Selesai
+  String _filterStatus = 'Semua';
 
   void _addTask() {
     if (_taskController.text.trim().isNotEmpty) {
@@ -126,7 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = widget.userName ?? 'I Putu Agus Martha Jaya';
     final nim = widget.userNim ?? '2415051097';
 
-    // Filter tugas berdasarkan pencarian dan status (Commit ke-14)
     final filteredTasks = _tasks.where((task) {
       final title = (task['title'] as String).toLowerCase();
       final isDone = task['isDone'] as bool;
@@ -357,6 +356,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
+            ),
+            const SizedBox(height: 8),
+            // Footer Info (Commit ke-15)
+            Text(
+              'TaskMate UTS • $name ($nim)',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
