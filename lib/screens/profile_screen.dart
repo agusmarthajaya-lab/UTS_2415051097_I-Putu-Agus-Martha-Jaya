@@ -1,109 +1,259 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  final String userName;
+  final String userNim;
+  final VoidCallback? onLogout;
+
+  const ProfileScreen({
+    super.key,
+    required this.userName,
+    required this.userNim,
+    this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil Pengembang'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            // Avatar / Logo Inisial
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.deepPurple.shade100,
-              child: const Icon(
-                Icons.person,
-                size: 50,
-                color: Colors.deepPurple,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Nama Lengkap Mahasiswa
-            const Text(
-              'I Putu Agus Martha Jaya',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            // NIM Mahasiswa
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.deepPurple.shade200),
-              ),
-              child: const Text(
-                'NIM: 2415051097',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Divider(),
-            const SizedBox(height: 20),
-            // Informasi Detail Project UTS
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Informasi Aplikasi UTS',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+    return Consumer<TaskProvider>(
+      builder: (context, provider, child) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                children: [
+                  // Profile Header Card
+                  Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 46,
+                            backgroundColor: Colors.deepPurple,
+                            child: Text(
+                              userName.isNotEmpty ? userName[0].toUpperCase() : 'M',
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            userName,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'NIM: $userNim',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Pendidikan Teknik Informatika — Undiksha',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.apps, color: Colors.deepPurple),
-                      title: Text('Nama Aplikasi'),
-                      subtitle: Text('TaskMate (Task Management App)'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Academic & Project Details Card
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.architecture, color: Colors.deepPurple),
-                      title: Text('Arsitektur'),
-                      subtitle: Text('Modular Clean Architecture & Provider'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Informasi Mata Kuliah & UTS',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const Divider(height: 20),
+                          _buildInfoRow(
+                            icon: Icons.school,
+                            label: 'Mata Kuliah',
+                            value: 'Pemrograman Mobile (UTS)',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            icon: Icons.person_pin,
+                            label: 'Dosen Pengampu',
+                            value: 'Dr. Ir. I Ketut Resika Arthana, S.T., M.Kom',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            icon: Icons.assistant,
+                            label: 'Teaching Assistant',
+                            value: 'Made Yuda Sadewa, S.Pd.',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            icon: Icons.code,
+                            label: 'Tema Project',
+                            value: 'TaskMate - Task & Productivity Manager',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            icon: Icons.cloud_done,
+                            label: 'Integrasi',
+                            value: 'Provider, REST API (ZenQuotes), Supabase DB',
+                          ),
+                        ],
+                      ),
                     ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.storage, color: Colors.deepPurple),
-                      title: Text('Backend & API'),
-                      subtitle: Text('Supabase Database & ZenQuotes API'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Task Statistics Summary
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ],
-                ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Ringkasan Data Tugas',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const Divider(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildMiniStat('Total Tugas', '${provider.totalCount}', Colors.blue),
+                              _buildMiniStat('Selesai', '${provider.completedCount}', Colors.green),
+                              _buildMiniStat('Tertunda', '${provider.pendingCount}', Colors.orange),
+                              _buildMiniStat(
+                                'Progres',
+                                '${(provider.completionRate * 100).toStringAsFixed(0)}%',
+                                Colors.deepPurple,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.logout),
+                      label: const Text(
+                        'Keluar dari Aplikasi',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: onLogout,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Colors.deepPurple.shade400),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+      ],
     );
   }
 }

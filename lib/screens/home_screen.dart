@@ -1,371 +1,305 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
+import '../widgets/quote_card.dart';
+import '../widgets/stats_card.dart';
+import '../widgets/task_card.dart';
+import 'task_detail_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  final String? userName;
-  final String? userNim;
+class HomeScreen extends StatelessWidget {
+  final String userName;
+  final String userNim;
+  final VoidCallback onNavigateToTasks;
+  final VoidCallback onNavigateToAddTask;
 
-  const HomeScreen({super.key, this.userName, this.userNim});
+  const HomeScreen({
+    super.key,
+    required this.userName,
+    required this.userNim,
+    required this.onNavigateToTasks,
+    required this.onNavigateToAddTask,
+  });
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final List<dynamic> _tasks = [];
-  final TextEditingController _taskController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedPriority = 'Normal';
-  String _filterStatus = 'Semua';
-
-  void _addTask() {
-    if (_taskController.text.trim().isNotEmpty) {
-      setState(() {
-        _tasks.add({
-          'title': _taskController.text.trim(),
-          'isDone': false,
-          'priority': _selectedPriority,
-        });
-        _taskController.clear();
-        _selectedPriority = 'Normal';
-      });
-    }
-  }
-
-  void _confirmDelete(int index) {
+  void _confirmDelete(BuildContext context, TaskProvider provider, String id, String title) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Hapus Tugas'),
-          content: const Text('Apakah Anda yakin ingin menghapus tugas ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Tugas'),
+        content: Text('Apakah Anda yakin ingin menghapus tugas "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  _tasks.removeAt(index);
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.deleteTask(id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Tugas berhasil dihapus!'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 
-  void _confirmClearAll() {
-    if (_tasks.isEmpty) return;
+  void _confirmClearAll(BuildContext context, TaskProvider provider) {
+    if (provider.tasks.isEmpty) return;
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Hapus Semua Tugas'),
-          content: const Text('Apakah Anda yakin ingin menghapus seluruh daftar tugas?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Semua Tugas'),
+        content: const Text('Apakah Anda yakin ingin menghapus seluruh daftar tugas?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  _tasks.clear();
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Hapus Semua'),
-            ),
-          ],
-        );
-      },
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await provider.clearAllTasks();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Seluruh tugas berhasil dibersihkan!'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: const Text('Hapus Semua'),
+          ),
+        ],
+      ),
     );
-  }
-
-  void _logout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'Penting':
-        return Colors.red;
-      case 'Sedang':
-        return Colors.orange;
-      default:
-        return Colors.green;
-    }
-  }
-
-  @override
-  void dispose() {
-    _taskController.dispose();
-    _searchController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.userName ?? 'I Putu Agus Martha Jaya';
-    final nim = widget.userNim ?? '2415051097';
+    return Consumer<TaskProvider>(
+      builder: (context, provider, child) {
+        final highPriorityTasks = provider.tasks
+            .where((t) => !t.isCompleted && (t.priority == 'Tinggi' || t.priority == 'High'))
+            .take(3)
+            .toList();
 
-    final filteredTasks = _tasks.where((task) {
-      final title = (task['title'] as String).toLowerCase();
-      final isDone = task['isDone'] as bool;
-      
-      bool matchesSearch = title.contains(_searchQuery.toLowerCase());
-      bool matchesFilter = true;
-
-      if (_filterStatus == 'Belum') {
-        matchesFilter = !isDone;
-      } else if (_filterStatus == 'Selesai') {
-        matchesFilter = isDone;
-      }
-
-      return matchesSearch && matchesFilter;
-    }).toList();
-
-    final int completedCount = _tasks
-        .where((task) => (task as Map<String, dynamic>)['isDone'] == true)
-        .length;
-    final int totalCount = _tasks.length;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('TaskMate - Daftar Tugas', style: TextStyle(fontSize: 18)),
-            Text(
-              '$name ($nim)',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.white24,
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Keluar',
-            onPressed: _logout,
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Input Tugas & Prioritas
-            Row(
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              provider.fetchTasks(),
+              provider.fetchDailyQuote(),
+            ]);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _taskController,
-                    decoration: const InputDecoration(
-                      labelText: 'Tambah tugas baru...',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.add_task),
-                    ),
-                    onSubmitted: (_) => _addTask(),
+                // Welcoming Card
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.deepPurple.shade100),
                   ),
-                ),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _selectedPriority,
-                  items: ['Normal', 'Sedang', 'Penting'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: const TextStyle(fontSize: 13)),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedPriority = newValue!;
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addTask,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                  child: const Text('Tambah'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Input Pencarian & Pilihan Filter Status
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Cari tugas...',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _filterStatus,
-                  items: ['Semua', 'Belum', 'Selesai'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text('Filter: $value', style: const TextStyle(fontSize: 13)),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _filterStatus = newValue!;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Statistik & Tombol Hapus Semua
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurple.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.deepPurple.shade200),
-                    ),
-                    child: Text(
-                      'Total: $totalCount | Selesai: $completedCount',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple.shade800,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: Colors.deepPurple,
+                        child: Text(
+                          userName.isNotEmpty ? userName[0].toUpperCase() : 'M',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: _tasks.isEmpty ? null : _confirmClearAll,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade50,
-                    foregroundColor: Colors.red,
-                    elevation: 0,
-                  ),
-                  icon: const Icon(Icons.delete_sweep, size: 18),
-                  label: const Text('Hapus Semua'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: filteredTasks.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Tidak ada tugas ditemukan.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredTasks.length,
-                      itemBuilder: (context, index) {
-                        final task = filteredTasks[index] as Map<String, dynamic>;
-                        final originalIndex = _tasks.indexOf(task);
-                        final priority = task['priority'] ?? 'Normal';
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: Checkbox(
-                              value: task['isDone'] as bool,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  _tasks[originalIndex]['isDone'] = value ?? false;
-                                });
-                              },
-                            ),
-                            title: Text(
-                              task['title'] as String,
-                              style: TextStyle(
-                                decoration: (task['isDone'] as bool)
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                                color: (task['isDone'] as bool)
-                                    ? Colors.grey
-                                    : Colors.black,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'Prioritas: $priority',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: _getPriorityColor(priority),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Halo, $userName!',
+                              style: const TextStyle(
+                                fontSize: 17,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
                               ),
                             ),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
+                            const SizedBox(height: 2),
+                            Text(
+                              'NIM: $userNim | PTI Undiksha',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.grey.shade700,
                               ),
-                              onPressed: () => _confirmDelete(originalIndex),
                             ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // REST API Motivation Quote Card
+                QuoteCard(
+                  quote: provider.quote,
+                  isLoading: provider.isQuoteLoading,
+                  errorMessage: provider.quoteError,
+                  onRefresh: () => provider.fetchDailyQuote(),
+                ),
+                const SizedBox(height: 16),
+
+                // Statistics Card
+                StatsCard(
+                  totalCount: provider.totalCount,
+                  completedCount: provider.completedCount,
+                  pendingCount: provider.pendingCount,
+                  completionRate: provider.completionRate,
+                ),
+                const SizedBox(height: 20),
+
+                // Quick Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_task),
+                        label: const Text('Tambah Tugas'),
+                        onPressed: onNavigateToAddTask,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.deepPurple,
+                          side: const BorderSide(color: Colors.deepPurple),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.list_alt),
+                        label: const Text('Semua Tugas'),
+                        onPressed: onNavigateToTasks,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // High Priority Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 22),
+                        SizedBox(width: 6),
+                        Text(
+                          'Tugas Prioritas Tinggi',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (provider.tasks.isNotEmpty)
+                      TextButton(
+                        onPressed: () => _confirmClearAll(context, provider),
+                        child: const Text(
+                          'Bersihkan Semua',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                if (provider.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (highPriorityTasks.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.thumb_up_alt_outlined, color: Colors.green.shade600, size: 36),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tidak ada tugas prioritas tinggi yang tertunda.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 13, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...highPriorityTasks.map(
+                    (task) => TaskCard(
+                      task: task,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailScreen(task: task),
                           ),
                         );
                       },
+                      onToggle: () => provider.toggleTaskStatus(task.id),
+                      onDelete: () => _confirmDelete(context, provider, task.id, task.title),
                     ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 8),
-            // Footer Info (Commit ke-15)
-            Text(
-              'TaskMate UTS • $name ($nim)',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

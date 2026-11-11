@@ -1,20 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'providers/task_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'services/supabase_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    // Ganti kata "proyekanda" di bawah dengan Project ID asli Anda dari Supabase!
-    url: 'https://proyekanda.supabase.co', 
-    
-    // Ganti string panjang di bawah dengan anon/public key asli Anda dari Supabase Project Settings > API
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ganti_dengan_anon_key_asli_anda',
-  );
+  // Inisialisasi Supabase secara aman (safe initialization)
+  try {
+    if (!SupabaseService.supabaseUrl.contains('proyekanda')) {
+      await Supabase.initialize(
+        url: SupabaseService.supabaseUrl,
+        // ignore: deprecated_member_use
+        anonKey: SupabaseService.supabaseAnonKey,
+      );
+    }
+  } catch (_) {
+    // Jika kredensial belum diisi atau koneksi offline, aplikasi beralih ke cache repository
+  }
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,38 +37,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TaskMate UTS',
+      title: 'TaskMate - UTS Pemrograman Mobile',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          centerTitle: false,
+        ),
       ),
-      home: const AuthGate(),
-    );
-  }
-}
-
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
-
-  @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        final session = Supabase.instance.client.auth.currentSession;
-        
-        if (session != null) {
-          return const HomeScreen();
-        }
-        
-        return const LoginScreen();
-      },
+      home: const LoginScreen(),
     );
   }
 }

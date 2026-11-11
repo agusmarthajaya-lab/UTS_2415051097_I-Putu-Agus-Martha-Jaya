@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'dashboard_screen.dart';
+import '../widgets/custom_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,25 +10,30 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _nimController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController =
+      TextEditingController(text: 'I Putu Agus Martha Jaya');
+  final TextEditingController _nimController =
+      TextEditingController(text: '2415051097');
 
   void _login() {
-    final name = _nameController.text.trim();
-    final nim = _nimController.text.trim();
+    if (_formKey.currentState!.validate()) {
+      final name = _nameController.text.trim();
+      final nim = _nimController.text.trim();
 
-    if (name.isNotEmpty && nim.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selamat datang, $name!'),
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeScreen(userName: name, userNim: nim),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nama dan NIM wajib diisi!'),
-          backgroundColor: Colors.red,
+          builder: (context) => DashboardScreen(userName: name, userNim: nim),
         ),
       );
     }
@@ -42,87 +48,117 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.of(context).size.width < 600;
+
     return Scaffold(
       body: Container(
-        // Menambahkan dekorasi latar belakang gradasi warna (Commit ke-12)
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.deepPurple, Colors.indigo],
+            colors: [Color(0xFF4A148C), Color(0xFF311B92), Color(0xFF1A237E)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Card(
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 24.0 : 64.0,
+                vertical: 24.0,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.task_alt,
-                      size: 64,
-                      color: Colors.deepPurple,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'TaskMate Login',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Silakan masukkan identitas Anda',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Lengkap',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _nimController,
-                      decoration: const InputDecoration(
-                        labelText: 'NIM',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.badge),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Card(
+                  elevation: 12,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(28.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.task_alt_rounded,
+                              size: 56,
+                              color: Colors.deepPurple,
+                            ),
                           ),
-                        ),
-                        onPressed: _login,
-                        child: const Text(
-                          'Masuk ke Aplikasi',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'TaskMate',
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Aplikasi Manajemen Tugas UTS Mobile',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Nama Mahasiswa',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.person_outline),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Nama tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _nimController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'NIM',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.badge_outlined),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return 'NIM tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          CustomButton(
+                            text: 'Masuk ke Aplikasi',
+                            icon: Icons.login_rounded,
+                            onPressed: _login,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Pendidikan Teknik Informatika — Undiksha',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
